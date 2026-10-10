@@ -1,194 +1,260 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>PvP Arena Online</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#080d18">
+<title>PvP Arena Online 2.0</title>
 <style>
-:root { color-scheme: dark; }
-* { box-sizing: border-box; }
-body { margin:0; background:#101522; color:#fff; font:16px system-ui,Arial,sans-serif; text-align:center; }
-main { max-width:900px; margin:auto; padding:14px; }
-h1 { color:#45d6ff; font-size:clamp(22px,5vw,30px); margin:8px 0; }
-p { line-height:1.4; }
-.lobby { display:flex; justify-content:center; flex-wrap:wrap; gap:7px; margin:14px 0; }
-input,button { font:inherit; padding:11px 13px; border:0; border-radius:10px; }
-input { width:150px; background:#252e42; color:white; text-transform:uppercase; }
-button { background:#33415f; color:white; cursor:pointer; touch-action:none; }
-button:active { filter:brightness(1.3); }
-#join { background:#087fa5; font-weight:700; }
-#status { min-height:24px; color:#c3d4ee; margin:10px 0; }
-#hud { display:flex; gap:8px; margin:10px 0; }
-.hp { flex:1; background:#27334a; padding:9px; border-radius:9px; }
-canvas { width:100%; height:auto; display:block; background:#18263a; border:2px solid #3c587c; border-radius:12px; touch-action:none; }
-#controls { display:flex; justify-content:space-between; align-items:center; gap:14px; margin:12px 0; }
-#pad { display:grid; grid-template-columns:repeat(3, minmax(38px,50px)); grid-template-rows:repeat(2,48px); gap:4px; }
-#pad button { margin:0; padding:4px; font-size:21px; }
-#attack { background:#bd355a; min-width:105px; min-height:68px; font-weight:800; }
-small { color:#aab7ce; }
+:root{color-scheme:dark;--bg:#080d18;--panel:#111b2d;--line:#2b3c58;--cyan:#49dcff;--red:#ff5871;--green:#5bf0b0;--text:#eef6ff;--muted:#9aacc7}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;touch-action:none}
+button,input{font:inherit}
+#game{position:fixed;inset:0;width:100%;height:100%;display:block}
+#topbar{position:fixed;top:calc(8px + env(safe-area-inset-top));left:9px;right:9px;display:flex;align-items:flex-start;justify-content:space-between;gap:7px;pointer-events:none}
+.panel{background:#0b1425e8;border:1px solid #8fb7ef2e;border-radius:13px;padding:9px 11px;box-shadow:0 8px 25px #0005;backdrop-filter:blur(8px)}
+#brand{font-size:12px;font-weight:950;letter-spacing:1.2px;color:var(--cyan)}
+#status{font-size:10px;color:var(--muted);margin-top:4px;max-width:45vw;overflow-wrap:anywhere}
+#stats{display:flex;gap:6px}
+.stat{min-width:51px;text-align:center}
+.stat small{display:block;color:var(--muted);font-size:9px;letter-spacing:.8px}
+.stat strong{font-size:16px}
+#hpbar{width:82px;height:5px;border-radius:9px;background:#2a3951;overflow:hidden;margin:5px auto 0}
+#hpfill{height:100%;width:100%;background:var(--green);transition:width .12s}
+#centerMessage{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);text-align:center;width:min(88vw,390px);pointer-events:none;text-shadow:0 3px 16px #000}
+#centerMessage h1{font-size:clamp(25px,7vw,43px);margin:0 0 6px;letter-spacing:1px}
+#centerMessage p{font-size:12px;color:#bdcbe0;line-height:1.5;margin:0}
+#menu{position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;padding:17px;background:linear-gradient(140deg,#070c17f2,#0b1930f2);overflow:auto}
+.card{width:min(100%,420px);border:1px solid #2c4263;border-radius:22px;padding:21px;background:linear-gradient(155deg,#14223a,#0b1220);box-shadow:0 25px 80px #0009}
+.eyebrow{font-size:10px;letter-spacing:2px;color:var(--cyan);font-weight:900}
+.card h1{font-size:29px;line-height:1.04;margin:8px 0}
+.card p{font-size:12px;line-height:1.55;color:#a8bad4}
+.field{display:block;margin:12px 0 6px;font-size:11px;color:#b8c8df}
+input{width:100%;padding:12px;border-radius:10px;border:1px solid #334766;background:#080f1c;color:#fff;outline:none}
+input:focus{border-color:var(--cyan)}
+.row{display:flex;gap:8px}.row>*{min-width:0;flex:1}
+.btn{border:0;border-radius:11px;padding:12px 13px;font-weight:850;color:#06111d;background:var(--cyan);cursor:pointer}
+.btn.secondary{color:#dce9ff;background:#22334d;border:1px solid #354c6c}
+.btn:active{transform:scale(.98)}
+#menuError{min-height:18px;color:#ff9aaa;font-size:11px;margin-top:8px;white-space:pre-wrap}
+#controls{position:fixed;inset:0;z-index:2;pointer-events:none;display:none}
+#stickBase{position:absolute;left:max(16px,env(safe-area-inset-left));bottom:calc(22px + env(safe-area-inset-bottom));width:124px;height:124px;border:1px solid #9bb6d744;background:#d5e7ff12;border-radius:50%;pointer-events:auto;touch-action:none}
+#stickKnob{position:absolute;left:36px;top:36px;width:52px;height:52px;border-radius:50%;background:#7ddfff55;border:2px solid #72e4ffb0;box-shadow:0 0 20px #39d9ff20}
+#actions{position:absolute;right:max(15px,env(safe-area-inset-right));bottom:calc(22px + env(safe-area-inset-bottom));display:grid;grid-template-columns:66px 66px;gap:9px;pointer-events:auto}
+.action{height:62px;border-radius:50%;border:1px solid #ffffff30;background:#111f35e8;color:#fff;font-size:10px;font-weight:900;box-shadow:0 6px 18px #0005;touch-action:none}
+.action b{display:block;font-size:20px;line-height:23px}
+#fire{background:#7b263ce8;border-color:#ff7d91a8}
+#reload{background:#174e69e8;border-color:#69dfff88}
+#aimHint{position:absolute;left:50%;bottom:calc(32px + env(safe-area-inset-bottom));transform:translateX(-50%);font-size:9px;color:#a8bad4;background:#08111dcc;border:1px solid #ffffff18;padding:6px 8px;border-radius:8px;white-space:nowrap}
+#feed{position:fixed;left:10px;top:105px;max-width:48vw;font-size:10px;line-height:1.55;color:#b8c8dc;pointer-events:none;text-shadow:0 2px 4px #000}
+#roomTag{font-size:10px;color:#7fe8ff;margin-top:3px}
+#bottomNote{font-size:10px;color:#8498b7;margin-top:12px;line-height:1.5}
+#netBadge{display:inline-block;width:6px;height:6px;border-radius:50%;background:#ffb454;margin-right:5px}
+@media(min-width:700px){#stickBase{width:140px;height:140px}#stickKnob{left:42px;top:42px}#actions{grid-template-columns:74px 74px}.action{height:70px}}
 </style>
 </head>
 <body>
-<main>
-  <h1>⚔ PVP ARENA ONLINE</h1>
-  <p>Masukkan kode room yang sama dengan temanmu untuk bertanding.</p>
-  <div class="lobby">
-    <input id="room" value="ARENA1" maxlength="20" aria-label="Kode room">
-    <button id="join">MASUK ARENA</button>
+<canvas id="game" aria-label="Arena game"></canvas>
+<div id="topbar">
+  <div class="panel">
+    <div id="brand">PVP ARENA <span style="color:#fff">/ 02</span></div>
+    <div id="status"><span id="netBadge"></span>Belum mulai</div>
+    <div id="roomTag">ROOM: —</div>
   </div>
-  <div id="status">Menghubungkan ke server...</div>
-  <div id="hud">
-    <div class="hp">Kamu: <b id="myhp">—</b> HP</div>
-    <div class="hp">Lawan: <b id="enemyhp">—</b> HP</div>
+  <div id="stats" class="panel">
+    <div class="stat"><small>HP</small><strong id="hpText">100</strong><div id="hpbar"><div id="hpfill"></div></div></div>
+    <div class="stat"><small>AMMO</small><strong id="ammoText">12/60</strong></div>
+    <div class="stat"><small>KILLS</small><strong id="killText">0</strong></div>
   </div>
-  <canvas id="game" width="800" height="450" aria-label="Arena game"></canvas>
-  <div id="controls">
-    <div id="pad">
-      <span></span><button data-key="up" aria-label="Atas">▲</button><span></span>
-      <button data-key="left" aria-label="Kiri">◀</button>
-      <button data-key="down" aria-label="Bawah">▼</button>
-      <button data-key="right" aria-label="Kanan">▶</button>
+</div>
+<div id="feed"></div>
+<div id="centerMessage"><h1>READY?</h1><p>Masuk arena untuk memulai.</p></div>
+<div id="controls">
+  <div id="stickBase"><div id="stickKnob"></div></div>
+  <div id="actions">
+    <button class="action" id="reload"><b>↻</b>RELOAD</button>
+    <button class="action" id="fire"><b>✦</b>TEMBAK</button>
+  </div>
+  <div id="aimHint">Joystick = gerak · ketuk TEMBAK untuk menembak ke arah lawan</div>
+</div>
+<div id="menu">
+  <div class="card">
+    <div class="eyebrow">ONLINE COMBAT • MOBILE READY</div>
+    <h1>PvP ARENA<br><span style="color:var(--cyan)">ONLINE 2.0</span></h1>
+    <p>Masuk ke arena shooter 2D. Bergerak dengan joystick, bidik dan tembak, kelola amunisi, lalu kalahkan lawan.</p>
+    <label class="field" for="nickname">NAMA PEMAIN</label>
+    <input id="nickname" maxlength="16" autocomplete="nickname" placeholder="Contoh: AcePlayer">
+    <div class="row">
+      <div><label class="field" for="room">KODE ROOM</label><input id="room" maxlength="16" value="ARENA1" autocapitalize="characters"></div>
+      <div><label class="field" for="server">SERVER URL (opsional)</label><input id="server" placeholder="kosong = situs ini" inputmode="url"></div>
     </div>
-    <button id="attack">⚔ SERANG</button>
+    <div class="row" style="margin-top:14px">
+      <button class="btn" id="joinBtn">MASUK ARENA</button>
+      <button class="btn secondary" id="practiceBtn">LATIHAN BOT</button>
+    </div>
+    <div id="menuError"></div>
+    <div id="bottomNote">Catatan: mode online hanya aktif jika server yang ada mendukung protokol/event yang cocok. Latihan bot bisa dimainkan tanpa server.</div>
   </div>
-  <p><small>PC: WASD / tombol panah untuk bergerak, Spasi untuk menyerang.<br>Serangan hanya mengenai lawan dalam jarak dekat.</small></p>
-</main>
+</div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const socket = io();
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-const statusEl = document.getElementById("status");
-let myId = null;
-let joined = false;
-let gameState = { players: [], winner: null };
-const keys = { up:false, down:false, left:false, right:false };
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+const canvas = $('game'), ctx = canvas.getContext('2d');
+let W=innerWidth,H=innerHeight,DPR=1;
+function resize(){DPR=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;canvas.width=Math.floor(W*DPR);canvas.height=Math.floor(H*DPR);canvas.style.width=W+'px';canvas.style.height=H+'px';ctx.setTransform(DPR,0,0,DPR,0,0)}
+addEventListener('resize',resize);resize();
 
-document.getElementById("join").addEventListener("click", () => {
-  const code = document.getElementById("room").value.trim();
-  if (!code) { statusEl.textContent = "Masukkan kode room."; return; }
-  if (!socket.connected) { statusEl.textContent = "Belum tersambung ke server."; return; }
-  socket.emit("joinRoom", code);
-  statusEl.textContent = "Mencoba masuk ke room...";
-});
-
-socket.on("connect", () => {
-  statusEl.textContent = "Terhubung ke server. Masukkan kode room.";
-});
-socket.on("connect_error", () => {
-  statusEl.textContent = "Gagal terhubung. Periksa server dan koneksi internet.";
-});
-socket.on("disconnect", () => {
-  joined = false;
-  myId = null;
-  gameState = { players: [], winner: null };
-  statusEl.textContent = "Koneksi terputus. Muat ulang halaman untuk mencoba lagi.";
-});
-socket.on("roomError", message => { statusEl.textContent = message; });
-socket.on("joined", data => {
-  myId = data.playerId;
-  joined = true;
-  statusEl.textContent = "Berhasil masuk! Tunggu pemain lawan.";
-});
-socket.on("state", state => {
-  gameState = state;
-  const me = state.players.find(p => p.id === myId);
-  const enemy = state.players.find(p => p.id !== myId);
-  document.getElementById("myhp").textContent = me ? me.hp : "—";
-  document.getElementById("enemyhp").textContent = enemy ? enemy.hp : "—";
-
-  if (state.winner) {
-    statusEl.textContent = state.winner === myId ? "🏆 KAMU MENANG!" : "Kamu kalah!";
-  } else if (state.players.length < 2) {
-    statusEl.textContent = "Room aktif — menunggu lawan masuk...";
-  } else {
-    statusEl.textContent = "Pertandingan berlangsung!";
-  }
-});
-
-function sendInput() {
-  if (joined) socket.emit("input", { ...keys });
+const WORLD={w:1600,h:1000};
+const obstacles=[
+{x:280,y:180,w:170,h:80},{x:650,y:130,w:90,h:180},{x:1050,y:190,w:210,h:70},
+{x:210,y:420,w:90,h:170},{x:520,y:390,w:170,h:90},{x:900,y:390,w:110,h:170},
+{x:1280,y:420,w:100,h:160},{x:380,y:720,w:210,h:80},{x:760,y:680,w:100,h:170},
+{x:1080,y:730,w:220,h:80}
+];
+let running=false, practice=false, player=null, players=new Map(), bullets=[], particles=[], keys={}, cam={x:0,y:0};
+let kills=0, ammo=12, reserve=60, reloading=false, reloadAt=0, lastShot=0, socket=null, online=false, connectionTimer=0;
+let joystick={x:0,y:0,pointer:null}, fireHeld=false, lastFrame=0, botShot=0, feedTimer=0;
+const rand=(a,b)=>a+Math.random()*(b-a), clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const uid=()=>Math.random().toString(36).slice(2,10);
+function makePlayer(id,name,x,y,isMe=false){return {id,name,x,y,hp:100,maxHp:100,angle:0,r:17,speed:230,color:isMe?'#49dcff':'#ff6078',isMe,alive:true,score:0,lastNet:performance.now()}}
+function addFeed(msg){$('feed').textContent=msg;$('feed').style.opacity='1';feedTimer=3}
+function setStatus(msg,good=false){$('status').textContent=msg;$('netBadge').style.background=good?'#5bf0b0':'#ffb454'}
+function updateHud(){if(!player)return;$('hpText').textContent=Math.max(0,Math.ceil(player.hp));$('hpfill').style.width=clamp(player.hp,0,100)+'%';$('hpfill').style.background=player.hp<30?'#ff5871':'#5bf0b0';$('ammoText').textContent=ammo+'/'+reserve;$('killText').textContent=kills}
+function collideCircleRect(x,y,r,o){const cx=clamp(x,o.x,o.x+o.w),cy=clamp(y,o.y,o.y+o.h),dx=x-cx,dy=y-cy;return dx*dx+dy*dy<r*r}
+function blocked(x,y,r){if(x<r||y<r||x>WORLD.w-r||y>WORLD.h-r)return true;return obstacles.some(o=>collideCircleRect(x,y,r,o))}
+function movePlayer(p,dx,dy){let nx=p.x+dx,ny=p.y+dy;if(!blocked(nx,p.y,p.r))p.x=nx;if(!blocked(p.x,ny,p.r))p.y=ny;p.x=clamp(p.x,p.r,WORLD.w-p.r);p.y=clamp(p.y,p.r,WORLD.h-p.r)}
+function worldPointer(e){const rect=canvas.getBoundingClientRect();return {x:e.clientX-rect.left+cam.x,y:e.clientY-rect.top+cam.y}}
+canvas.addEventListener('pointerdown',e=>{if(!running)return;const p=worldPointer(e);if(player)player.angle=Math.atan2(p.y-player.y,p.x-player.x);if(e.pointerType==='mouse')shoot()});
+addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(e.key.toLowerCase()))e.preventDefault();if(e.key===' ')shoot();if(e.key.toLowerCase()==='r')reload()});
+addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+function setJoy(e){const rect=$('stickBase').getBoundingClientRect(),cx=rect.left+rect.width/2,cy=rect.top+rect.height/2,dx=e.clientX-cx,dy=e.clientY-cy,len=Math.hypot(dx,dy),max=43,k=len>max?max/len:1;joystick.x=dx*k/max;joystick.y=dy*k/max;$('stickKnob').style.left=(rect.width/2-26+dx*k)+'px';$('stickKnob').style.top=(rect.height/2-26+dy*k)+'px'}
+const stick=$('stickBase');
+stick.addEventListener('pointerdown',e=>{e.preventDefault();joystick.pointer=e.pointerId;stick.setPointerCapture(e.pointerId);setJoy(e)});
+stick.addEventListener('pointermove',e=>{if(joystick.pointer===e.pointerId)setJoy(e)});
+function resetJoy(){joystick.x=0;joystick.y=0;joystick.pointer=null;$('stickKnob').style.left='36px';$('stickKnob').style.top='36px'}
+stick.addEventListener('pointerup',e=>{if(joystick.pointer===e.pointerId)resetJoy()});stick.addEventListener('pointercancel',resetJoy);
+$('fire').addEventListener('pointerdown',e=>{e.preventDefault();shoot()});
+$('reload').addEventListener('pointerdown',e=>{e.preventDefault();reload()});
+function reload(){if(!running||reloading||ammo>=12||reserve<=0)return;reloading=true;reloadAt=performance.now()+1150;addFeed('Mengisi amunisi…')}
+function emitEvent(name,payload){if(!socket||!online)return;try{socket.emit(name,payload)}catch(e){}}
+function shoot(){
+ if(!running||!player||!player.alive||reloading)return;
+ const now=performance.now();if(now-lastShot<230)return;lastShot=now;
+ if(ammo<=0){addFeed('Amunisi habis — tekan RELOAD');return}
+ ammo--;updateHud();
+ const b={id:uid(),owner:player.id,x:player.x+Math.cos(player.angle)*23,y:player.y+Math.sin(player.angle)*23,vx:Math.cos(player.angle)*650,vy:Math.sin(player.angle)*650,life:1.1};
+ bullets.push(b);
+ emitEvent('shoot',{room:$('room').value.trim(),id:b.id,x:b.x,y:b.y,angle:player.angle,owner:player.id});
 }
-function setKey(key, value) {
-  if (keys[key] === value) return;
-  keys[key] = value;
-  sendInput();
+function startGame(isPractice){
+ practice=isPractice;online=false;running=true;kills=0;ammo=12;reserve=60;reloading=false;bullets=[];particles=[];players.clear();
+ const nick=($('nickname').value.trim()||'Player').slice(0,16);
+ player=makePlayer('local-'+uid(),nick,180,180,true);players.set(player.id,player);
+ if(practice){const bot=makePlayer('bot-'+uid(),'Arena Bot',WORLD.w-180,WORLD.h-180,false);bot.color='#ff6078';players.set(bot.id,bot);setStatus('Mode latihan · bot aktif',true);$('roomTag').textContent='ROOM: PRACTICE';addFeed('Latihan dimulai!')}
+ else{connectOnline();$('roomTag').textContent='ROOM: '+($('room').value.trim().toUpperCase()||'ARENA1')}
+ $('menu').style.display='none';$('controls').style.display='block';$('centerMessage').innerHTML='';updateHud();lastFrame=performance.now();requestAnimationFrame(loop);
 }
-const keyMap = {
-  ArrowUp:"up", w:"up", W:"up", ArrowDown:"down", s:"down", S:"down",
-  ArrowLeft:"left", a:"left", A:"left", ArrowRight:"right", d:"right", D:"right"
-};
-window.addEventListener("keydown", e => {
-  const k = keyMap[e.key];
-  if (k) { e.preventDefault(); setKey(k, true); }
-  if (e.code === "Space") { e.preventDefault(); attack(); }
-});
-window.addEventListener("keyup", e => {
-  const k = keyMap[e.key];
-  if (k) { e.preventDefault(); setKey(k, false); }
-});
-window.addEventListener("blur", () => {
-  for (const k in keys) keys[k] = false;
-  sendInput();
-});
-
-document.querySelectorAll("[data-key]").forEach(button => {
-  const key = button.dataset.key;
-  button.addEventListener("pointerdown", e => {
-    e.preventDefault();
-    try { button.setPointerCapture(e.pointerId); } catch (_) {}
-    setKey(key, true);
-  });
-  const release = e => { e.preventDefault(); setKey(key, false); };
-  button.addEventListener("pointerup", release);
-  button.addEventListener("pointercancel", release);
-  button.addEventListener("lostpointercapture", () => setKey(key, false));
-});
-function attack() {
-  if (joined && !gameState.winner) socket.emit("attack");
+function connectOnline(){
+ const custom=$('server').value.trim();
+ const url=custom||location.origin;
+ const protocol=location.protocol==='https:'?'wss:':'ws:';
+ // Prefer a Socket.IO client exposed by the existing server. This only connects; exact event names must match server.js.
+ if(typeof window.io==='function'){
+   try{
+    socket=window.io(url,{transports:['websocket','polling'],timeout:7000});
+    socket.on('connect',()=>{online=true;setStatus('Terhubung · '+socket.id,true);addFeed('Server tersambung');emitEvent('joinRoom',{room:$('room').value.trim().toUpperCase(),name:player.name});emitEvent('join',{room:$('room').value.trim().toUpperCase(),name:player.name,id:player.id,x:player.x,y:player.y})});
+    socket.on('disconnect',()=>{online=false;setStatus('Koneksi terputus');addFeed('Koneksi server terputus')});
+    socket.on('connect_error',err=>{online=false;setStatus('Gagal terhubung');$('menuError').textContent='Socket.IO gagal tersambung: '+(err.message||'periksa server URL')});
+    // Support common event names; the backend may use different ones.
+    ['state','gameState','players','playerJoined','playerMoved','playerUpdate'].forEach(ev=>socket.on(ev,data=>handleNetwork(ev,data)));
+    ['shot','bullet','playerShot'].forEach(ev=>socket.on(ev,data=>handleRemoteShot(data)));
+   }catch(err){setStatus('Koneksi gagal');$('menuError').textContent='Gagal memulai koneksi Socket.IO.'}
+ }else{
+   // A native WebSocket fallback is intentionally not guessed: its message format must match the server.
+   setStatus('Online belum dikonfigurasi');
+   $('menuError').textContent='Tidak menemukan Socket.IO client pada server. Kirim server.js agar koneksi online dapat disesuaikan.';
+   addFeed('Mode game berjalan, koneksi online belum terverifikasi');
+ }
 }
-document.getElementById("attack").addEventListener("pointerdown", e => {
-  e.preventDefault(); attack();
-});
-document.getElementById("attack").addEventListener("contextmenu", e => e.preventDefault());
-
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = "#18263a";
-  ctx.fillRect(0, 0, 800, 450);
-  ctx.strokeStyle = "#293b54";
-  ctx.lineWidth = 1;
-  for (let x=0; x<=800; x+=50) {
-    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,450); ctx.stroke();
-  }
-  for (let y=0; y<=450; y+=50) {
-    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(800,y); ctx.stroke();
-  }
-  ctx.strokeStyle = "#526d8d";
-  ctx.lineWidth = 3;
-  ctx.strokeRect(10,10,780,430);
-
-  for (const p of gameState.players) {
-    ctx.beginPath();
-    ctx.arc(p.x,p.y,20,0,Math.PI*2);
-    ctx.fillStyle = p.color;
-    ctx.fill();
-    ctx.strokeStyle = p.id === myId ? "#fff" : "#ffdf80";
-    ctx.lineWidth = p.id === myId ? 3 : 1;
-    ctx.stroke();
-
-    ctx.fillStyle = "#fff";
-    ctx.font = "bold 13px system-ui";
-    ctx.textAlign = "center";
-    ctx.fillText(p.id === myId ? "KAMU" : "LAWAN",p.x,p.y-29);
-    ctx.fillStyle = "#222";
-    ctx.fillRect(p.x-22,p.y+27,44,5);
-    ctx.fillStyle = p.hp > 30 ? "#51e18b" : "#ff4d68";
-    ctx.fillRect(p.x-22,p.y+27,44*p.hp/100,5);
-  }
-  requestAnimationFrame(draw);
+function handleNetwork(event,data){
+ if(!data)return;
+ const list=Array.isArray(data)?data:(data.players&&Array.isArray(data.players)?data.players:null);
+ if(list){const seen=new Set();for(const d of list){const id=String(d.id||d.playerId||'');if(!id||id===player.id)continue;seen.add(id);upsertRemote(d,id)}for(const [id,p] of players){if(!p.isMe&&!id.startsWith('bot-')&&!seen.has(id))players.delete(id)}return}
+ if(data.player){const d=data.player;const id=String(d.id||d.playerId||'');if(id&&id!==player.id)upsertRemote(d,id);return}
+ const id=String(data.id||data.playerId||'');if(id&&id!==player.id)upsertRemote(data,id);
 }
+function upsertRemote(d,id){
+ let p=players.get(id);if(!p){p=makePlayer(id,String(d.name||d.nickname||'Opponent'),Number(d.x)||rand(200,1400),Number(d.y)||rand(150,850),false);p.color='#ff6078';players.set(id,p)}
+ if(Number.isFinite(Number(d.x)))p.x=clamp(Number(d.x),p.r,WORLD.w-p.r);
+ if(Number.isFinite(Number(d.y)))p.y=clamp(Number(d.y),p.r,WORLD.h-p.r);
+ if(Number.isFinite(Number(d.hp)))p.hp=clamp(Number(d.hp),0,100);
+ if(Number.isFinite(Number(d.angle)))p.angle=Number(d.angle);
+ p.name=String(d.name||d.nickname||p.name);p.lastNet=performance.now();
+}
+function handleRemoteShot(d){if(!d)return;const owner=String(d.owner||d.id||'remote');if(owner===player?.id)return;const x=Number(d.x),y=Number(d.y),a=Number(d.angle);if(!Number.isFinite(x)||!Number.isFinite(y)||!Number.isFinite(a))return;bullets.push({id:uid(),owner,x,y,vx:Math.cos(a)*650,vy:Math.sin(a)*650,life:1.1,remote:true})}
+function networkTick(){
+ if(!online||!player)return;
+ emitEvent('playerMove',{room:$('room').value.trim().toUpperCase(),id:player.id,name:player.name,x:player.x,y:player.y,angle:player.angle,hp:player.hp});
+ emitEvent('move',{room:$('room').value.trim().toUpperCase(),id:player.id,name:player.name,x:player.x,y:player.y,angle:player.angle,hp:player.hp});
+}
+let netAccum=0;
+function update(dt,now){
+ if(!running||!player)return;
+ if(reloading&&now>=reloadAt){const need=12-ammo,take=Math.min(need,reserve);ammo+=take;reserve-=take;reloading=false;updateHud();addFeed('Amunisi terisi')}
+ let mx=joystick.x,my=joystick.y;
+ if(keys.w||keys.arrowup)my-=1;if(keys.s||keys.arrowdown)my+=1;if(keys.a||keys.arrowleft)mx-=1;if(keys.d||keys.arrowright)mx+=1;
+ const len=Math.hypot(mx,my);if(len>1){mx/=len;my/=len}
+ if(player.alive){movePlayer(player,mx*player.speed*dt,my*player.speed*dt);if(len>.1&&Math.abs(joystick.x)+Math.abs(joystick.y)>.15)player.angle=Math.atan2(my,mx)}
+ if(practice){
+  const bot=[...players.values()].find(p=>p.id.startsWith('bot-'));
+  if(bot&&bot.alive&&player.alive){const dx=player.x-bot.x,dy=player.y-bot.y,d=Math.hypot(dx,dy);bot.angle=Math.atan2(dy,dx);if(d>170)movePlayer(bot,dx/d*bot.speed*.48*dt,dy/d*bot.speed*.48*dt);if(now-botShot>1050&&d<560){botShot=now;bullets.push({id:uid(),owner:bot.id,x:bot.x+Math.cos(bot.angle)*22,y:bot.y+Math.sin(bot.angle)*22,vx:Math.cos(bot.angle)*440,vy:Math.sin(bot.angle)*440,life:1.5})}}
+ }
+ for(let i=bullets.length-1;i>=0;i--){const b=bullets[i];b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;let remove=b.life<=0||b.x<0||b.y<0||b.x>WORLD.w||b.y>WORLD.h||obstacles.some(o=>b.x>o.x&&b.x<o.x+o.w&&b.y>o.y&&b.y<o.y+o.h);
+  if(!remove){for(const p of players.values()){if(!p.alive||p.id===b.owner)continue;if(Math.hypot(p.x-b.x,p.y-b.y)<p.r+4){if(p.isMe){p.hp-=practice?18:12;if(p.hp<=0){p.hp=0;p.alive=false;addFeed('Kamu kalah! Menunggu respawn…');setTimeout(()=>respawn(p),1800)}}else if(b.owner===player.id){p.hp-=34;if(p.hp<=0){p.hp=0;p.alive=false;kills++;player.score++;addFeed('Eliminasi! +1 kill');setTimeout(()=>respawn(p),1800)}}spawnParticles(b.x,b.y,p.isMe?'#ff5871':'#49dcff',7);remove=true;updateHud();break}}}
+  if(remove)bullets.splice(i,1)
+ }
+ for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;if(p.life<=0)particles.splice(i,1)}
+ cam.x=clamp(player.x-W/2,0,Math.max(0,WORLD.w-W));cam.y=clamp(player.y-H/2,0,Math.max(0,WORLD.h-H));
+ netAccum+=dt;if(netAccum>.06){netAccum=0;networkTick()}
+ if(feedTimer>0){feedTimer-=dt;if(feedTimer<=0)$('feed').style.opacity='0'}
+}
+function respawn(p){p.x=rand(100,WORLD.w-100);p.y=rand(100,WORLD.h-100);p.hp=100;p.alive=true;if(p.isMe){ammo=12;reserve=Math.max(reserve,24);updateHud();addFeed('Respawn berhasil')}}
+function spawnParticles(x,y,color,n){for(let i=0;i<n;i++){const a=rand(0,Math.PI*2),s=rand(40,180);particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:rand(.15,.45),color})}}
+function draw(){
+ ctx.clearRect(0,0,W,H);ctx.fillStyle='#091322';ctx.fillRect(0,0,W,H);
+ ctx.save();ctx.translate(-cam.x,-cam.y);
+ // arena floor
+ ctx.fillStyle='#0d1b2b';ctx.fillRect(0,0,WORLD.w,WORLD.h);
+ ctx.strokeStyle='#1c3048';ctx.lineWidth=1;
+ for(let x=0;x<=WORLD.w;x+=50){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,WORLD.h);ctx.stroke()}
+ for(let y=0;y<=WORLD.h;y+=50){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(WORLD.w,y);ctx.stroke()}
+ ctx.strokeStyle='#4a7892';ctx.lineWidth=5;ctx.strokeRect(2,2,WORLD.w-4,WORLD.h-4);
+ for(const o of obstacles){ctx.fillStyle='#182b41';ctx.fillRect(o.x,o.y,o.w,o.h);ctx.strokeStyle='#34516d';ctx.lineWidth=2;ctx.strokeRect(o.x,o.y,o.w,o.h);ctx.fillStyle='#243c55';ctx.fillRect(o.x+7,o.y+7,o.w-14,5)}
+ for(const b of bullets){ctx.beginPath();ctx.strokeStyle=b.owner===player?.id?'#7beaff':'#ff8b9d';ctx.lineWidth=4;ctx.moveTo(b.x-b.vx*.018,b.y-b.vy*.018);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.beginPath();ctx.fillStyle='#fff';ctx.arc(b.x,b.y,2,0,Math.PI*2);ctx.fill()}
+ for(const p of players.values()){if(!p.alive)continue;
+  ctx.save();ctx.translate(p.x,p.y);
+  ctx.fillStyle='#0006';ctx.beginPath();ctx.ellipse(2,7,p.r+4,p.r*.7,0,0,Math.PI*2);ctx.fill();
+  ctx.rotate(p.angle);ctx.fillStyle='#0b1322';ctx.fillRect(1,-5,29,10);ctx.fillStyle=p.isMe?'#9cf0ff':'#ff9aab';ctx.fillRect(8,-3,24,6);
+  ctx.rotate(-p.angle);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(0,0,p.r,0,Math.PI*2);ctx.fill();ctx.strokeStyle=p.isMe?'#c7f7ff':'#ffc0ca';ctx.lineWidth=3;ctx.stroke();
+  ctx.fillStyle='#07111e';ctx.beginPath();ctx.arc(4,-5,4,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#dbe9ff';ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.fillText(p.name.slice(0,16),0,-27);
+  ctx.fillStyle='#28374e';ctx.fillRect(-20,-22,40,4);ctx.fillStyle=p.hp<35?'#ff536d':'#59edb0';ctx.fillRect(-20,-22,40*clamp(p.hp/100,0,1),4);
+  ctx.restore();
+ }
+ for(const p of particles){ctx.globalAlpha=clamp(p.life*3,0,1);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,2.5,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}
+ ctx.restore();
+ // crosshair
+ if(running&&player){ctx.save();ctx.translate(W/2,H/2);ctx.strokeStyle='#d5f8ff9c';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-9,0);ctx.lineTo(-3,0);ctx.moveTo(3,0);ctx.lineTo(9,0);ctx.moveTo(0,-9);ctx.lineTo(0,-3);ctx.moveTo(0,3);ctx.lineTo(0,9);ctx.stroke();ctx.restore()}
+}
+function loop(now){if(!running)return;const dt=Math.min(.035,(now-lastFrame)/1000||0);lastFrame=now;update(dt,now);draw();requestAnimationFrame(loop)}
+$('joinBtn').addEventListener('click',()=>{ $('menuError').textContent='';startGame(false)});
+$('practiceBtn').addEventListener('click',()=>{ $('menuError').textContent='';startGame(true)});
+addEventListener('beforeunload',()=>{try{socket?.disconnect()}catch(e){}});
+$('nickname').value='AcePlayer';
 draw();
+})();
 </script>
 </body>
 </html>
