@@ -1,0 +1,13 @@
+{
+  "name": "pvp-arena-online",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A small 2D online PvP arena using Node.js and Socket.IO",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "socket.io": "^4.8.1"
+  }
+}
