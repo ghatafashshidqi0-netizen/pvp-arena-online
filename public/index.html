@@ -3,272 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nitro Rumble - 2D Multiplayer Racing</title>
+    <title>Strikers Online 2D</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-        .screen { width: 100%; max-width: 800px; background: #1e293b; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; }
-        .hidden { display: none !important; }
-        h1 { margin-bottom: 20px; font-size: 2.5rem; color: #38bdf8; text-shadow: 0 0 10px rgba(56,189,248,0.5); }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; background: #334155; border: 1px solid #475569; color: white; border-radius: 8px; font-size: 1rem; }
-        button { width: 100%; padding: 12px; margin: 10px 0; background: #0ea5e9; border: none; color: white; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        button:hover { background: #0284c7; }
-        .btn-secondary { background: #64748b; }
-        .btn-secondary:hover { background: #475569; }
-        canvas { background: #22c55e; border-radius: 12px; box-shadow: inset 0 0 20px rgba(0,0,0,0.6); display: block; margin: 0 auto; }
-        #ui-game { position: relative; }
-        .hud { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 8px; text-align: left; font-size: 0.9rem; }
+        body { background: #0f172a; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     </style>
 </head>
-<body>
+<body class="flex flex-col items-center justify-center min-h-screen">
 
-    <!-- Menu Utama -->
-    <div id="screen-menu" class="screen">
-        <h1>NITRO RUMBLE</h1>
-        <input type="text" id="playerName" placeholder="Nama Pemain" maxlength="15">
-        <label>Warna Mobil:</label>
-        <select id="carColor">
-            <option value="#ef4444">Merah Menyala</option>
-            <option value="#3b82f6">Biru Elektrik</option>
-            <option value="#eab308">Kuning Emas</option>
-            <option value="#ec4899">Pink Cyber</option>
-        </select>
-        <button onclick="createRoom()">Buat Room Baru</button>
-        <input type="text" id="roomCodeInput" placeholder="Masukkan Kode Room">
-        <button class="btn-secondary" onclick="joinRoom()">Gabung Room</button>
-    </div>
-
-    <!-- Lobi Room -->
-    <div id="screen-lobby" class="screen hidden">
-        <h1>LOBI ROOM</h1>
-        <p>Kode Room: <strong id="displayRoomId" style="color: #38bdf8; font-size: 1.5rem;"></strong></p>
-        <div style="margin: 20px 0; background: #334155; padding: 15px; border-radius: 8px;">
-            <h3>Daftar Pemain:</h3>
-            <ul id="playerList" style="list-style: none; margin-top: 10px;"></ul>
-        </div>
-        <button id="btnStart" class="hidden" onclick="startGame()">Mulai Balapan</button>
-        <p id="waitingText">Menunggu host memulai game...</p>
-    </div>
-
-    <!-- Layar Game -->
-    <div id="screen-game" class="screen hidden" style="max-width: 900px;">
-        <div id="ui-game">
-            <div class="hud">
-                <div>Kecepatan: <span id="hudSpeed">0</span> km/h</div>
-                <div>Lap: <span id="hudLap">0</span> / 3</div>
+    <!-- MENU UTAMA -->
+    <div id="menu-screen" class="bg-slate-800 p-8 rounded-2xl shadow-2xl w-96 text-center border border-slate-700">
+        <h1 class="text-3xl font-extrabold mb-6 text-emerald-400 tracking-wider">⚽ STRIKER ARENA</h1>
+        <div class="space-y-4">
+            <input id="room-name-input" type="text" placeholder="Nama Room..." class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 focus:outline-none focus:border-emerald-500 text-white">
+            <button onclick="createRoom()" class="w-full py-3 bg-emerald-500 hover:bg-emerald-600 font-bold rounded-xl transition shadow-lg shadow-emerald-500/30">Buat Room</button>
+            <hr class="border-slate-700 my-4">
+            <h2 class="text-lg font-semibold text-slate-300">Daftar Room Tersedia</h2>
+            <div id="room-list" class="space-y-2 max-h-40 overflow-y-auto text-left">
+                <!-- Daftar room akan muncul disini -->
             </div>
-            <canvas id="gameCanvas" width="850" height="500"></canvas>
         </div>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
+    <!-- ROOM / LOBBY SCREEN -->
+    <div id="game-screen" class="hidden flex flex-col items-center">
+        <div class="flex justify-between w-[800px] mb-4 bg-slate-800 px-6 py-3 rounded-xl border border-slate-700 items-center">
+            <div class="text-lg font-bold text-rose-500">Team A: <span id="score-a">0</span></div>
+            <div id="room-info" class="text-sm text-slate-400">Room: -</div>
+            <div class="text-lg font-bold text-blue-500">Team B: <span id="score-b">0</span></div>
+        </div>
+        <canvas id="gameCanvas" width="800" height="600" class="bg-emerald-700 rounded-2xl shadow-2xl border-4 border-slate-700"></canvas>
+        <p class="mt-3 text-slate-400 text-sm">Gunakan tombol **W, A, S, D** atau **Arrow Keys** untuk menggerakkan karakter.</p>
+    </div>
+
     <script>
         const socket = io();
-        let currentRoomId = '';
-        let isHost = false;
-        let players = {};
-        let myId = '';
+        let currentRoomId = null;
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
 
-        const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
-        let myCar = { x: 150, y: 250, angle: 0, speed: 0, maxSpeed: 6, acceleration: 0.1, friction: 0.96, lap: 0 };
-        let particles = [];
-
-        function showScreen(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-            document.getElementById(id).classList.remove('hidden');
-        }
+        let gameState = null;
+        let keys = {};
 
         function createRoom() {
-            const name = document.getElementById('playerName').value || 'Pemain';
-            const color = document.getElementById('carColor').value;
-            socket.emit('createRoom', { playerName: name, carColor: color });
-            isHost = true;
+            const name = document.getElementById('room-name-input').value || "Room Mabar";
+            socket.emit('create-room', name);
         }
 
-        function joinRoom() {
-            const name = document.getElementById('playerName').value || 'Pemain';
-            const color = document.getElementById('carColor').value;
-            const roomId = document.getElementById('roomCodeInput').value.trim().toUpperCase();
-            if (!roomId) return alert('Masukkan kode room!');
+        function joinRoom(roomId) {
+            socket.emit('join-room', roomId);
+        }
+
+        socket.on('room-created', (roomId) => {
+            enterGame(roomId);
+        });
+
+        socket.on('joined-room', (roomId) => {
+            enterGame(roomId);
+        });
+
+        function enterGame(roomId) {
             currentRoomId = roomId;
-            socket.emit('joinRoom', { roomId, playerName: name, carColor: color });
+            document.getElementById('menu-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('room-info').innerText = `Room ID: ${roomId}`;
         }
 
-        socket.on('roomCreated', (data) => {
-            currentRoomId = data.roomId;
-            players = data.players;
-            myId = socket.id;
-            document.getElementById('displayRoomId').innerText = currentRoomId;
-            document.getElementById('btnStart').classList.remove('hidden');
-            document.getElementById('waitingText').classList.add('hidden');
-            updatePlayerList();
-            showScreen('screen-lobby');
+        socket.on('room-list', (rooms) => {
+            const listDiv = document.getElementById('room-list');
+            listDiv.innerHTML = '';
+            if (rooms.length === 0) {
+                listDiv.innerHTML = '<p class="text-slate-500 text-sm">Belum ada room aktif.</p>';
+                return;
+            }
+            rooms.forEach(r => {
+                listDiv.innerHTML += `
+                    <div class="flex justify-between items-center bg-slate-900 p-2 rounded-lg">
+                        <span class="text-sm font-medium">${r.name} (${r.players}/4)</span>
+                        <button onclick="joinRoom('${r.id}')" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-xs font-bold rounded-lg transition">Gabung</button>
+                    </div>
+                `;
+            });
         });
 
-        socket.on('updatePlayers', (serverPlayers) => {
-            players = serverPlayers;
-            myId = socket.id;
-            if(!document.getElementById('screen-lobby').classList.contains('hidden')) {
-                updatePlayerList();
-                showScreen('screen-lobby');
-            }
+        socket.on('update-game', (state) => {
+            gameState = state;
         });
 
-        socket.on('errorMsg', (msg) => { alert(msg); });
+        // Input Keyboard
+        window.addEventListener('keydown', (e) => keys[e.key.toLowerCase()] = true);
+        window.addEventListener('keyup', (e) => keys[e.key.toLowerCase()] = false);
 
-        function updatePlayerList() {
-            const list = document.getElementById('playerList');
-            list.innerHTML = '';
-            for (let id in players) {
-                const p = players[id];
-                list.innerHTML += `<li style="padding: 5px; color: ${p.color}; font-weight: bold;">${p.name} ${id === socket.id ? '(Anda)' : ''}</li>`;
-            }
+        function updatePlayerPosition() {
+            if (!currentRoomId || !gameState || !gameState.players[socket.id]) return;
+            let p = gameState.players[socket.id];
+            let speed = 4;
+            if (keys['w'] || keys['arrowup']) p.y -= speed;
+            if (keys['s'] || keys['arrowdown']) p.y += speed;
+            if (keys['a'] || keys['arrowleft']) p.x -= speed;
+            if (keys['d'] || keys['arrowright']) p.x += speed;
+
+            socket.emit('player-move', { roomId: currentRoomId, x: p.x, y: p.y });
         }
 
-        function startGame() {
-            socket.emit('startGame', currentRoomId);
-        }
+        // Render Game Loop Client
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        socket.on('gameStarted', () => {
-            showScreen('screen-game');
-            initGame();
-        });
+            // Lapangan Sepak Bola (Garis & Gawang)
+            ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(40, 40, 720, 520);
+            ctx.beginPath();
+            ctx.moveTo(400, 40); ctx.lineTo(400, 560);
+            ctx.stroke();
 
-        socket.on('updatePlayerPos', (data) => {
-            if (players[data.id]) {
-                players[data.id].x = data.x;
-                players[data.id].y = data.y;
-                players[data.id].angle = data.angle;
-                players[data.id].speed = data.speed;
-                players[data.id].lap = data.lap;
-            }
-        });
+            // Gawang Kiri & Kanan
+            ctx.strokeRect(20, 220, 20, 160);
+            ctx.strokeRect(760, 220, 20, 160);
 
-        // Logika Game Loop & Canvas
-        function initGame() {
-            const canvas = document.getElementById('gameCanvas');
-            const ctx = canvas.getContext('2d');
+            if (gameState) {
+                // Update Skor
+                document.getElementById('score-a').innerText = gameState.score.teamA;
+                document.getElementById('score-b').innerText = gameState.score.teamB;
 
-            window.addEventListener('keydown', e => { if (keys.hasOwnProperty(e.code)) keys[e.code] = true; });
-            window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.code)) keys[e.code] = false; });
-
-            function gameLoop() {
-                // Kontrol Mobil Sendiri
-                if (keys.ArrowUp) myCar.speed += myCar.acceleration;
-                else if (keys.ArrowDown) myCar.speed -= myCar.acceleration;
-                else myCar.speed *= myCar.friction;
-
-                if (myCar.speed > myCar.maxSpeed) myCar.speed = myCar.maxSpeed;
-                if (myCar.speed < -myCar.maxSpeed / 2) myCar.speed = -myCar.maxSpeed / 2;
-
-                if (Math.abs(myCar.speed) > 0.5) {
-                    if (keys.ArrowLeft) myCar.angle -= 0.04 * (myCar.speed / myCar.maxSpeed);
-                    if (keys.ArrowRight) myCar.angle += 0.04 * (myCar.speed / myCar.maxSpeed);
-                }
-
-                myCar.x += Math.cos(myCar.angle) * myCar.speed;
-                myCar.y += Math.sin(myCar.angle) * myCar.speed;
-
-                // Kirim posisi ke server
-                socket.emit('playerMove', {
-                    roomId: currentRoomId,
-                    x: myCar.x, y: myCar.y, angle: myCar.angle, speed: myCar.speed, lap: myCar.lap
-                });
-
-                // Efek Partikel Asap Knalpot
-                if (Math.abs(myCar.speed) > 1) {
-                    particles.push({
-                        x: myCar.x - Math.cos(myCar.angle) * 15,
-                        y: myCar.y - Math.sin(myCar.angle) * 15,
-                        size: Math.random() * 4 + 2,
-                        alpha: 0.6
-                    });
-                }
-
-                // Render Canvas
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-                // Gambar Trek Balap (Sirkuit Oval Sederhana)
-                ctx.fillStyle = '#334155';
+                // Gambar Bola
+                ctx.fillStyle = '#ffffff';
                 ctx.beginPath();
-                ctx.ellipse(425, 250, 350, 200, 0, 0, Math.PI * 2);
+                ctx.arc(gameState.ball.x, gameState.ball.y, gameState.ball.radius, 0, Math.PI * 2);
                 ctx.fill();
+                ctx.closePath();
 
-                ctx.fillStyle = '#22c55e';
-                ctx.beginPath();
-                ctx.ellipse(425, 250, 200, 90, 0, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Garis Finish
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 4;
-                ctx.setLineDash([5, 5]);
-                ctx.beginPath();
-                ctx.moveTo(150, 50);
-                ctx.lineTo(150, 250);
-                ctx.stroke();
-                ctx.setLineDash([]);
-
-                // Update & Gambar Partikel
-                particles.forEach((p, index) => {
-                    p.alpha -= 0.03;
-                    p.size += 0.1;
-                    if (p.alpha <= 0) particles.splice(index, 1);
-                    else {
-                        ctx.fillStyle = `rgba(200, 200, 200, ${p.alpha})`;
-                        ctx.beginPath();
-                        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                });
-
-                // Gambar Semua Mobil Pemain
-                for (let id in players) {
-                    const p = players[id];
-                    const isMe = id === socket.id;
-                    const carX = isMe ? myCar.x : p.x;
-                    const carY = isMe ? myCar.y : p.y;
-                    const carAngle = isMe ? myCar.angle : p.angle;
-                    const carColor = p.color || '#3b82f6';
-
-                    ctx.save();
-                    ctx.translate(carX, carY);
-                    ctx.rotate(carAngle);
-
-                    // Badan Mobil
-                    ctx.fillStyle = carColor;
-                    ctx.fillRect(-18, -10, 36, 20);
-                    // Kaca Depan
-                    ctx.fillStyle = '#0f172a';
-                    ctx.fillRect(-2, -8, 8, 16);
-                    // Roda
-                    ctx.fillStyle = '#000';
-                    ctx.fillRect(-14, -13, 8, 4);
-                    ctx.fillRect(6, -13, 8, 4);
-                    ctx.fillRect(-14, 9, 8, 4);
-                    ctx.fillRect(6, 9, 8, 4);
-
-                    ctx.restore();
-
-                    // Nama Pemain di Atas Mobil
-                    ctx.fillStyle = '#ffffff';
-                    ctx.font = '12px sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(p.name, carX, carY - 20);
+                // Gambar Pemain
+                for (let id in gameState.players) {
+                    let player = gameState.players[id];
+                    ctx.fillStyle = player.color;
+                    ctx.beginPath();
+                    ctx.arc(player.x, player.y, 15, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = '#fff';
+                    ctx.stroke();
+                    ctx.closePath();
                 }
-
-                // Update HUD
-                document.getElementById('hudSpeed').innerText = Math.round(Math.abs(myCar.speed) * 20);
-                document.getElementById('hudLap').innerText = myCar.lap;
-
-                requestAnimationFrame(gameLoop);
             }
 
-            // Set posisi awal mobil pemain
-            myCar.x = 150;
-            myCar.y = 150;
-            gameLoop();
+            updatePlayerPosition();
+            requestAnimationFrame(draw);
         }
+
+        requestAnimationFrame(draw);
+        socket.emit('get-rooms');
     </script>
 </body>
 </html>
